@@ -1,0 +1,50 @@
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Python bytecode files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Local development settings
+.env
+.venv
+.python-version
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Test cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+.DS_Store
+
+# Large data files (if applicable)
+*.csv
+*.xlsx
+*.db
+*.sqlite3
+
+# Output directories
+output/
+results/
