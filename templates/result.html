@@ -264,7 +264,7 @@
                 <h4>Network Nodes</h4>
                 <div>
                     {% for node in result.gene_network.nodes %}
-                        {% if node in result.gene_network.detected_disease_genes %}
+                        {% if result.gene_network.detected_disease_genes and node in result.gene_network.detected_disease_genes %}
                             <span class="network-node disease">{{ node }}</span>
                         {% else %}
                             <span class="network-node normal">{{ node }}</span>

@@ -7,6 +7,8 @@ This is a web application for analyzing gene sequences using various computation
 - Sequence Alignment Analysis
 - k-mer Frequency Analysis
 - Motif and Pattern Detection
+- Gene Network Analysis
+- Codon Optimization
 - Support for both text input and file upload
 - Beautiful and responsive user interface
 

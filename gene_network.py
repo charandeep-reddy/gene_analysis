@@ -22,6 +22,16 @@ def create_gene_network(edges, disease_genes=None):
     Returns:
         NetworkX graph object
     """
+    # Make sure the DISEASE_DATABASE variable is defined
+    # If it's not defined in the file, add it:
+    if 'DISEASE_DATABASE' not in globals():
+        DISEASE_DATABASE = {
+            "BRCA1": "Breast cancer",
+            "TP53": "Li-Fraumeni syndrome",
+            "EGFR": "Lung cancer",
+            # Add more as needed
+        }
+
     G = nx.Graph()
     for edge in edges:
         G.add_edge(edge[0], edge[1], weight=edge[2])
@@ -62,16 +72,18 @@ def find_shortest_path(G, start_gene, end_gene):
     Returns:
         Dictionary with path information
     """
-    if start_gene not in G.nodes or end_gene not in G.nodes:
-        return {"error": f"One or both genes are not in the network"}
+    # Check if both genes exist in the network
+    if start_gene not in G.nodes:
+        return {"error": f"Start gene '{start_gene}' not found in the network."}
+    if end_gene not in G.nodes:
+        return {"error": f"End gene '{end_gene}' not found in the network."}
     
     try:
-        path = nx.shortest_path(G, source=start_gene, target=end_gene, weight='weight')
-        path_length = nx.shortest_path_length(G, source=start_gene, target=end_gene, weight='weight')
-        
-        return {
-            "path": path,
-            "path_length": path_length
-        }
+        # Find shortest path using NetworkX
+        path = nx.shortest_path(G, source=start_gene, target=end_gene)
+        path_length = nx.shortest_path_length(G, source=start_gene, target=end_gene)
+        return {"path": path, "path_length": path_length}
     except nx.NetworkXNoPath:
-        return {"error": f"No path found between {start_gene} and {end_gene}"}
+        return {"error": f"No path exists between '{start_gene}' and '{end_gene}'."}
+    except Exception as e:
+        return {"error": f"An error occurred: {str(e)}"}
