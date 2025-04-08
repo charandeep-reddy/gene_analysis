@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gene Language Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        .form-control {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            margin-bottom: 1rem;
+        }
+        .btn-primary {
+            background: #2a5298;
+            border: none;
+            width: 100%;
+            padding: 0.8rem;
+        }
+        .btn-primary:hover {
+            background: #1e3c72;
+        }
+        .alert {
+            margin-bottom: 1rem;
+        }
+        .example-text {
+            font-size: 0.9rem;
+            color: #e0e0e0;
+            margin-top: 0.5rem;
+        }
+        .file-input-wrapper {
+            margin-top: 0.5rem;
+        }
+        .conditional-fields {
+            display: none;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        .file-badge {
+            display: inline-block;
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            margin-right: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .sequence-badge {
+            background-color: #28a745;
+            color: white;
+        }
+        .network-badge {
+            background-color: #007bff;
+            color: white;
+        }
+        .unknown-badge {
+            background-color: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Gene Language Analytics</h1>
+        
+        {% if error %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form action="/analyze" method="post" enctype="multipart/form-data">
+            <div class="mb-4">
+                <label class="form-label">First Gene Sequence</label>
+                <textarea class="form-control" id="sequence1" name="sequence1" rows="4" placeholder="Enter first gene sequence here or upload a file below..."></textarea>
+                <div class="file-input-wrapper">
+                    <input type="file" class="form-control" id="file1" name="file1" accept=".txt,.fasta,.fa,.fna,.csv,.tsv,.sif">
+                </div>
+                <div id="file1-info" class="mt-2"></div>
+                <div class="example-text">
+                    Example: You can paste APOE gene sequence or upload APOE.fna file
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label">Second Gene Sequence (Optional)</label>
+                <textarea class="form-control" id="sequence2" name="sequence2" rows="4" placeholder="Enter second gene sequence here or upload a file below..."></textarea>
+                <div class="file-input-wrapper">
+                    <input type="file" class="form-control" id="file2" name="file2" accept=".txt,.fasta,.fa,.fna,.csv,.tsv,.sif">
+                </div>
+                <div id="file2-info" class="mt-2"></div>
+                <div class="example-text">
+                    Example: You can paste HBB gene sequence or upload HBB.fna file
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label">Analysis Method</label>
+                <select class="form-control" name="analysis_method" id="analysis-method">
+                    <option value="sequence_alignment">Sequence Alignment</option>
+                    <option value="kmer_frequency">k-mer Frequency</option>
+                    <option value="motif_detection">Motif Detection</option>
+                    <option value="pattern_search">Pattern Search</option>
+                    <option value="codon_optimization">Codon Optimization</option>
+                    <option value="gene_network">Gene Network Analysis</option>
+                </select>
+                <div id="method-description" class="mt-2 example-text"></div>
+            </div>
+            
+            <!-- Conditional fields for alignment algorithms -->
+            <div id="alignment-options" class="conditional-fields">
+                <div class="mb-3">
+                    <label class="form-label">Alignment Algorithm</label>
+                    <select class="form-control" name="alignment_type">
+                        <option value="biopython">BioPython Default</option>
+                        <option value="needleman_wunsch">Needleman-Wunsch (Global)</option>
+                        <option value="smith_waterman">Smith-Waterman (Local)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Conditional fields for pattern search -->
+            <div id="pattern-options" class="conditional-fields">
+                <div class="mb-3">
+                    <label class="form-label">Pattern to Search For</label>
+                    <input type="text" class="form-control" name="pattern" placeholder="Enter the pattern or motif to search for">
+                </div>
+            </div>
+            
+            <!-- Conditional fields for gene network analysis -->
+            <div id="network-options" class="conditional-fields">
+                <div class="mb-3">
+                    <label class="form-label">Gene Interaction Data</label>
+                    <textarea class="form-control" name="edge_data" rows="4" placeholder="Enter gene interactions (one per line): GeneA GeneB Weight"></textarea>
+                    <div class="example-text">
+                        Example: BRCA1 TP53 0.8
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Disease-Related Genes (comma-separated)</label>
+                    <input type="text" class="form-control" name="disease_genes" placeholder="BRCA1, TP53, EGFR">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Find Shortest Path Between Genes (Optional)</label>
+                    <div class="row">
+                        <div class="col">
+                            <input type="text" class="form-control" name="start_gene" placeholder="Start Gene">
+                        </div>
+                        <div class="col">
+                            <input type="text" class="form-control" name="end_gene" placeholder="End Gene">
+                        </div>
+                    </div>
+                </div>
+            </div>
+                        
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">Analyze</button>
+            </div>
+        </form>
+    </div>
+    
+    <script>
+        // Method descriptions
+        const methodDescriptions = {
+            'sequence_alignment': 'Compares two sequences to find similarities. Requires two sequences.',
+            'kmer_frequency': 'Analyzes frequency of subsequences of length k.',
+            'motif_detection': 'Identifies recurring patterns in the sequence.',
+            'pattern_search': 'Searches for specific patterns in the sequence.',
+            'codon_optimization': 'Analyzes and optimizes codon usage in DNA sequences. Sequence length must be divisible by 3.',
+            'gene_network': 'Analyzes interactions between genes. Requires network data.'
+        };
+        
+        // File type definitions
+        const sequenceFileTypes = ['fasta', 'fa', 'fna', 'ffn', 'faa', 'frn'];
+        const networkFileTypes = ['sif', 'csv', 'tsv'];
+        
+        // Method compatibility with file types
+        const methodFileCompatibility = {
+            'sequence_alignment': { sequence: true, network: false },
+            'kmer_frequency': { sequence: true, network: false },
+            'motif_detection': { sequence: true, network: false },
+            'pattern_search': { sequence: true, network: false },
+            'codon_optimization': { sequence: true, network: false },
+            'gene_network': { sequence: false, network: true }
+        };
+        
+        // Show/hide conditional fields based on selected analysis method
+        document.getElementById('analysis-method').addEventListener('change', function() {
+            // Update method description
+            const description = methodDescriptions[this.value] || '';
+            document.getElementById('method-description').textContent = description;
+            
+            // Hide all conditional fields first
+            document.querySelectorAll('.conditional-fields').forEach(field => {
+                field.style.display = 'none';
+            });
+            
+            // Show relevant fields based on selection
+            if (this.value === 'sequence_alignment') {
+                document.getElementById('alignment-options').style.display = 'block';
+            } else if (this.value === 'pattern_search') {
+                document.getElementById('pattern-options').style.display = 'block';
+            } else if (this.value === 'gene_network') {
+                document.getElementById('network-options').style.display = 'block';
+            }
+            
+            // Check compatibility every time method changes
+            updateMethodAvailability();
+        });
+        
+        // Helper function to get file extension
+        function getFileExtension(filename) {
+            return filename.split('.').pop().toLowerCase();
+        }
+        
+        // Helper function to check file type
+        function getFileType(filename) {
+            if (!filename) return 'unknown';
+            
+            const ext = getFileExtension(filename);
+            
+            if (sequenceFileTypes.includes(ext)) {
+                return 'sequence';
+            } else if (networkFileTypes.includes(ext)) {
+                return 'network';
+            } else if (ext === 'txt') {
+                // Text can be either - we'll assume sequence by default
+                return 'text';
+            }
+            
+            return 'unknown';
+        }
+        
+        // Update file info display
+        function updateFileInfo(fileInput, infoDiv) {
+            if (fileInput.files.length === 0) {
+                infoDiv.innerHTML = '';
+                return;
+            }
+            
+            const fileName = fileInput.files[0].name;
+            const fileType = getFileType(fileName);
+            
+            let badgeClass = 'unknown-badge';
+            let typeText = 'Unknown';
+            
+            if (fileType === 'sequence') {
+                badgeClass = 'sequence-badge';
+                typeText = 'Sequence File';
+            } else if (fileType === 'network') {
+                badgeClass = 'network-badge';
+                typeText = 'Network File';
+            } else if (fileType === 'text') {
+                badgeClass = 'sequence-badge';
+                typeText = 'Text File (treating as sequence)';
+            }
+            
+            infoDiv.innerHTML = `
+                <div class="file-badge ${badgeClass}">${typeText}</div>
+                <small>${fileName}</small>
+            `;
+        }
+        
+        // Handle file uploads and method compatibility
+        function updateMethodAvailability() {
+            const file1Input = document.getElementById('file1');
+            const file2Input = document.getElementById('file2');
+            const seq1Input = document.getElementById('sequence1');
+            const seq2Input = document.getElementById('sequence2');
+            const methodSelect = document.getElementById('analysis-method');
+            const currentMethod = methodSelect.value;
+            
+            // Ensure message div exists
+            let messageDiv = document.getElementById('method-compatibility');
+            if (!messageDiv) {
+                messageDiv = document.createElement('div');
+                messageDiv.id = 'method-compatibility';
+                messageDiv.className = 'alert alert-info mt-2';
+                messageDiv.style.display = 'none';
+                methodSelect.parentNode.appendChild(messageDiv);
+            }
+            
+            // Clear any previous messages
+            messageDiv.style.display = 'none';
+            
+            // Check files and sequences
+            const hasFile1 = file1Input.files.length > 0;
+            const hasFile2 = file2Input.files.length > 0;
+            const hasSeq1 = seq1Input.value.trim().length > 0;
+            const hasSeq2 = seq2Input.value.trim().length > 0;
+            
+            // File names and types
+            const file1Name = hasFile1 ? file1Input.files[0].name : '';
+            const file2Name = hasFile2 ? file2Input.files[0].name : '';
+            const file1Type = hasFile1 ? getFileType(file1Name) : 'none';
+            const file2Type = hasFile2 ? getFileType(file2Name) : 'none';
+            
+            // Reset all options to enabled state
+            const methodOptions = methodSelect.options;
+            for (let i = 0; i < methodOptions.length; i++) {
+                methodOptions[i].disabled = false;
+            }
+            
+            // Compatibility checks
+            let message = '';
+            let needsMethodChange = false;
+            
+            // CASE 1: Network file detected
+            if ((hasFile1 && (file1Type === 'network' || file1Type === 'text')) || 
+                (hasFile2 && (file2Type === 'network' || file2Type === 'text'))) {
+                
+                // For network files, only gene_network analysis makes sense
+                if (file1Type === 'network' || file2Type === 'network') {
+                    for (let i = 0; i < methodOptions.length; i++) {
+                        if (methodOptions[i].value !== 'gene_network') {
+                            methodOptions[i].disabled = true;
+                        }
+                    }
+                    
+                    message = 'Network file detected. Only Gene Network Analysis is available.';
+                    
+                    if (currentMethod !== 'gene_network') {
+                        needsMethodChange = true;
+                    }
+                }
+            }
+            
+            // CASE 2: Sequence alignment needs two sequences
+            if (currentMethod === 'sequence_alignment' && (!hasFile2 && !hasSeq2)) {
+                if (hasFile1 || hasSeq1) {
+                    message = 'Sequence alignment requires two sequences. Please provide a second sequence.';
+                }
+            }
+            
+            // CASE 3: Method requires a sequence but none provided
+            if (!hasSeq1 && !hasFile1 && 
+                ['kmer_frequency', 'motif_detection', 'pattern_search', 'codon_optimization'].includes(currentMethod)) {
+                message = `${currentMethod.replace('_', ' ')} requires at least one sequence.`;
+            }
+            
+            // Display message if needed
+            if (message) {
+                messageDiv.textContent = message;
+                messageDiv.style.display = 'block';
+                
+                // Change method if needed
+                if (needsMethodChange) {
+                    // Find first enabled option
+                    for (let i = 0; i < methodOptions.length; i++) {
+                        if (!methodOptions[i].disabled) {
+                            methodSelect.value = methodOptions[i].value;
+                            // Trigger change event
+                            methodSelect.dispatchEvent(new Event('change'));
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Add event listeners
+        document.getElementById('file1').addEventListener('change', function() {
+            updateFileInfo(this, document.getElementById('file1-info'));
+            updateMethodAvailability();
+        });
+        
+        document.getElementById('file2').addEventListener('change', function() {
+            updateFileInfo(this, document.getElementById('file2-info'));
+            updateMethodAvailability();
+        });
+        
+        document.getElementById('sequence1').addEventListener('input', updateMethodAvailability);
+        document.getElementById('sequence2').addEventListener('input', updateMethodAvailability);
+        
+        // Initialize
+        document.getElementById('analysis-method').dispatchEvent(new Event('change'));
+    </script>
+</body>
+</html>
