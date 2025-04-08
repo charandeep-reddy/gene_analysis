@@ -89,9 +89,12 @@ def parse_fasta_content(content):
         else:
             # Assume raw sequence
             for line in lines:
-                sequence += line.strip()
+                # Remove whitespace and common non-sequence characters
+                clean_line = re.sub(r'[\s0-9,\.;:\-_]', '', line)
+                sequence += clean_line
                 
-        return sequence
+        return sequence.upper()  # Return standardized uppercase sequence
+
     except Exception as e:
         logger.error(f"Error parsing FASTA content: {str(e)}")
         return ""
